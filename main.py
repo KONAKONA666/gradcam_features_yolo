@@ -24,7 +24,7 @@ parser.add_argument('--names', type=str, default=None,
 args = parser.parse_args()
 
 
-def mask_to_heatmap(bbox, mask, res_img):
+def mask_to_heatmap(mask):
     mask = mask.squeeze(0).mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).detach().cpu().numpy().astype(
         np.uint8)
     heatmap = cv2.applyColorMap(mask, cv2.COLORMAP_JET)
@@ -67,7 +67,6 @@ def main(img_path):
     images = []
     for i, mask in enumerate(masks):
         heatmap = mask_to_heatmap(mask)
-        print(heatmap.shape)
         images.append(heatmap)
     final_image = concat_images(images)
     img_name = split_extension(os.path.split(img_path)[-1], suffix='-res')
