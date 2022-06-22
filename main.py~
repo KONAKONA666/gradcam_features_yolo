@@ -68,10 +68,15 @@ def main(img_path):
     tic = time.time()
     masks, logits, [boxes, _, class_names, _] = saliency_method(torch_img)
     print("total time:", round(time.time() - tic, 4))
-    images = []
+    result = torch_img.squeeze(0).mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).detach().cpu().numpy()
+    result = result[..., ::-1]  # convert to bgr
+    images = [result]
     for i, mask in enumerate(masks):
-        print(mask.shape)
-        images.append(mask)
+        res_img = result.copy()
+        bbox, cls_name = boxes[0][i], class_names[0][i]
+        res_img, heat_map = get_res_img(bbox, mask, res_img)
+        res_img = put_text_box(bbox, cls_name, res_img)
+        images.append(res_img)
     final_image = concat_images(images)
     img_name = split_extension(os.path.split(img_path)[-1], suffix='-res')
     output_path = f'{args.output_dir}/{img_name}'
