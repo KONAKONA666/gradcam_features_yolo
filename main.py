@@ -23,6 +23,7 @@ parser.add_argument('--names', type=str, default=None,
 
 args = parser.parse_args()
 
+MARGIN = 25
 
 def mask_to_heatmap(mask):
     mask = mask.squeeze(0).mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).detach().cpu().numpy().astype(
@@ -44,10 +45,10 @@ def put_text_box(bbox, cls_name, res_img):
 def concat_images(images):
     w, h = images[0].shape[:2]
     width = w
-    height = h * len(images)
+    height = h * len(images) + len(images)*MARGIN
     base_img = np.zeros((width, height, 3), dtype=np.uint8)
     for i, img in enumerate(images):
-        base_img[:, h * i:h * (i + 1), ...] = img
+        base_img[:, (h+MARGIN) * i:(h+MARGIN) * i + h, ...] = img
     return base_img
 
 
