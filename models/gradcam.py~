@@ -72,7 +72,7 @@ class YOLOV5GradCAM:
             b, k, u, v = gradients.size()
             alpha = gradients.view(b, k, -1).mean(2)
             weights = alpha.view(b, k, 1, 1)
-            saliency_map = (weights * activations).sum(1, keepdim=True)
+            saliency_map = (weights * activations)
             saliency_map = F.relu(saliency_map)
             saliency_maps.append(saliency_map)
         return saliency_maps, logits, preds

@@ -1,3 +1,4 @@
+import math
 import os
 import time
 import argparse
@@ -6,6 +7,9 @@ from models.gradcam import YOLOV5GradCAM
 from models.yolo_v5_object_detector import YOLOV5TorchObjectDetector
 import cv2
 from deep_utils import Box, split_extension
+
+import matplotlib
+import matplotlib.pyplot as plt
 
 # Arguments
 parser = argparse.ArgumentParser()
@@ -21,9 +25,10 @@ parser.add_argument('--device', type=str, default='cpu', help='cuda or cpu')
 parser.add_argument('--names', type=str, default=None,
                     help='The name of the classes. The default is set to None and is set to coco classes. Provide your custom names as follow: object1,object2,object3')
 
+parser.add_argument('--min_plots', type=int, default=32, help='min plots')
+
 args = parser.parse_args()
 
-MARGIN = 25
 
 def mask_to_heatmap(mask):
     mask = mask.squeeze(0).mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).detach().cpu().numpy().astype(
@@ -66,15 +71,21 @@ def main(img_path):
     masks, logits, [boxes, _, class_names, _] = saliency_method(torch_img)
     print("total time:", round(time.time() - tic, 4))
     images = []
-    for i, mask in enumerate(masks):
-        heatmap = mask_to_heatmap(mask)
-        images.append(heatmap)
-    final_image = concat_images(images)
-    img_name = split_extension(os.path.split(img_path)[-1], suffix='-res')
-    output_path = f'{args.output_dir}/{img_name}'
     os.makedirs(args.output_dir, exist_ok=True)
-    print(f'[INFO] Saving the final image at {output_path}')
-    cv2.imwrite(output_path, final_image)
+    for i, mask in enumerate(masks):
+        n = min(int(mask.shape[1]), args.min_plots)
+        fig, ax = plt.subplots(math.ceil(n/8), 8, tight_layout=True)
+        ax = ax.ravel()
+        plt.subplots_adjust(wspace=0.5, hspace=0.05)
+        for j in range(n):
+            ax[j].imshow(mask.squeeze(0)[j].detach().cpu())
+            ax[j].axis('off')
+        
+        img_name = split_extension(os.path.split(img_path)[-1], suffix='-res')[:-4]+str(i)+'.png'
+        output_path = f'{args.output_dir}/{img_name}'
+ 
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.close()
 
 
 def folder_main(folder_path):
