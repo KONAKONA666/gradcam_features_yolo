@@ -24,15 +24,11 @@ parser.add_argument('--names', type=str, default=None,
 args = parser.parse_args()
 
 
-def get_res_img(bbox, mask, res_img):
+def mask_to_heatmap(bbox, mask, res_img):
     mask = mask.squeeze(0).mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).detach().cpu().numpy().astype(
         np.uint8)
     heatmap = cv2.applyColorMap(mask, cv2.COLORMAP_JET)
-    n_heatmat = (Box.fill_outer_box(heatmap, bbox) / 255).astype(np.float32)
-    res_img = res_img / 255
-    res_img = cv2.add(res_img, n_heatmat)
-    res_img = (res_img / res_img.max())
-    return res_img, n_heatmat
+    return heatmap
 
 
 def put_text_box(bbox, cls_name, res_img):
@@ -70,8 +66,9 @@ def main(img_path):
     print("total time:", round(time.time() - tic, 4))
     images = []
     for i, mask in enumerate(masks):
-        print(mask.shape)
-        images.append(mask)
+        heatmap = mask_to_heatmap(mask)
+        print(heatmap.shape)
+        images.append(heatmap)
     final_image = concat_images(images)
     img_name = split_extension(os.path.split(img_path)[-1], suffix='-res')
     output_path = f'{args.output_dir}/{img_name}'
