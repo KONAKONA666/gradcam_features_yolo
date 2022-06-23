@@ -85,6 +85,7 @@ def main(img_path):
         output_path = f'{args.output_dir}/{img_name}'
  
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        np.save(output_path[:-4]+'.npy', mask[0].detach().cpu().numpy())
         plt.close()
 
 
