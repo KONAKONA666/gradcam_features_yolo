@@ -25,7 +25,7 @@ parser.add_argument('--device', type=str, default='cpu', help='cuda or cpu')
 parser.add_argument('--names', type=str, default=None,
                     help='The name of the classes. The default is set to None and is set to coco classes. Provide your custom names as follow: object1,object2,object3')
 
-parser.add_argument('--min_plots', type=int, default=32, help='min plots')
+parser.add_argument('--min_plots', type=int, default=1, help='min plots')
 
 args = parser.parse_args()
 
@@ -74,12 +74,9 @@ def main(img_path):
     os.makedirs(args.output_dir, exist_ok=True)
     for i, mask in enumerate(masks):
         n = min(int(mask.shape[1]), args.min_plots)
-        fig, ax = plt.subplots(math.ceil(n/8), 8, tight_layout=True)
-        ax = ax.ravel()
+        fig, ax = plt.subplots(math.ceil(n/8), 1, tight_layout=True)
         plt.subplots_adjust(wspace=0.5, hspace=0.05)
-        for j in range(n):
-            ax[j].imshow(mask.squeeze(0)[j].detach().cpu())
-            ax[j].axis('off')
+        ax.imshow(mask.squeeze(0)[0].detach().cpu())
         
         img_name = split_extension(os.path.split(img_path)[-1], suffix='-res')[:-4]+str(i)+'.png'
         output_path = f'{args.output_dir}/{img_name}'
